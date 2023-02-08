@@ -1,21 +1,24 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace QuadTrees
 {
     public class QuadTree
     {
-        private readonly List<TreePoint> _allObjects = new List<TreePoint>();
-        private readonly List<TreePoint> _quadObjects = new List<TreePoint>();
         private readonly List<TreePoint> _branchObjects = new List<TreePoint>();
         private readonly QuadTree _parent;
         private bool _isRoot;
+        private bool _isLeaf = true;
+        private int _depth = 0;
 
-        private const int MaxCapacity = 4;
-
-        public bool IsLeaf => Branches[0] is null;
+        private const int MaxCapacity = 2;
+        private const int MaxDepth = 10;
+        
+        public bool IsLeaf => _isLeaf;
         public Bounds Bounds { get; private set; }
         public QuadTree[] Branches { get; private set; } = new QuadTree[4];
+        public List<TreePoint> QuadObjects { get; } = new List<TreePoint>();
 
         public QuadTree(bool isRoot, Bounds bounds)
         {
@@ -23,12 +26,12 @@ namespace QuadTrees
             Bounds = bounds;
         }
 
-        public QuadTree(bool isRoot, Bounds bounds, List<TreePoint> allTreeObjects, QuadTree parent)
+        private QuadTree(bool isRoot, Bounds bounds, QuadTree parent,int depth)
         {
             Bounds = bounds;
             _isRoot = isRoot;
             _parent = parent;
-            _allObjects = allTreeObjects;
+            _depth = depth;
         }
 
         public void Insert(TreePoint point)
@@ -44,33 +47,24 @@ namespace QuadTrees
                 return;
             }
             
-            if (_quadObjects.Count + 1 > MaxCapacity)
+            point.leaf = this;
+            QuadObjects.Add(point);
+
+            if (QuadObjects.Count > MaxCapacity && _depth<=MaxDepth)
             {
-                _quadObjects.Add(point);
                 Subdivide();
-                return;
             }
 
-            _quadObjects.Add(point);
-            _allObjects.Add(point);
         }
 
         public void Remove(TreePoint point)
         {
-            if (!_allObjects.Contains(point))
-            {
-                return;
-            }
-
             if (IsLeaf)
             {
-                if (_quadObjects.Contains(point))
-                {
-                    _quadObjects.Remove(point);
-                    _allObjects.Remove(point);
-                    _parent.UpdateBranches();
-                    return;
-                }
+                if (QuadObjects.Count(p => p.id == point.id) <= 0) return;
+                QuadObjects.RemoveAll(p=>p.id==point.id);
+                _parent?.UpdateBranches();
+                return;
             }
 
             foreach (var branch in Branches)
@@ -82,15 +76,18 @@ namespace QuadTrees
 
         public void UpdateObject(TreePoint point)
         {
-
+            if (point.leaf.Bounds.Contains(point.position)) return;
+            point.leaf.Remove(point);
+            Insert(point);
         }
 
         private void UpdateBranches()
         {
+            if(IsLeaf) return;
             _branchObjects.Clear();
             for (var i = 0; i < 4; i++)
             {
-                foreach (var obj in Branches[i]._quadObjects)
+                foreach (var obj in Branches[i].QuadObjects)
                 {
                     _branchObjects.Add(obj);
                 }
@@ -102,12 +99,16 @@ namespace QuadTrees
 
         private void Connect()
         {
-            for (int i = 0; i < 4; i++) Branches[i] = null;
-            _quadObjects.Clear();
-            foreach (var obj in _branchObjects)
+            //for (var i = 0; i < 4; i++) Branches[i] = null;
+            _isLeaf = true;
+            QuadObjects.Clear();
+            for (var index = 0; index < _branchObjects.Count; index++)
             {
-                _quadObjects.Add(obj);
+                var obj = _branchObjects[index];
+                obj.leaf = this;
+                QuadObjects.Add(obj);
             }
+            _parent?.UpdateBranches();
         }
 
         private void Subdivide()
@@ -116,25 +117,28 @@ namespace QuadTrees
             var y = Bounds.center.y;
             var size = Bounds.extents;
             size.z = 10;
-            for (var i = 0; i < 4; i++)
+            
+            if (Branches[1] is null)
             {
-                var newBounds =
-                    new Bounds(new Vector3(
-                            x - size.x + 2 * size.x * (i % 2),
-                            y - size.y + 2 * size.y * (i / 2),
-                            0),
-                        size);
-                Branches[i] = new QuadTree(false, newBounds, _allObjects, this);
+                for (var i = 0; i < 4; i++)
+                {
+                    var newBounds =
+                        new Bounds(new Vector3(
+                                x - size.x / 2 + size.x * (i % 2),
+                                y - size.y / 2 + size.y * (i / 2),
+                                0),
+                            size);
+                    Branches[i] = new QuadTree(false, newBounds, this, _depth + 1);
+                }
             }
 
-
-            for (int i = _quadObjects.Count-1; i >= 0; i--)
+            foreach (var obj in QuadObjects)
             {
-                var quadObj = _quadObjects[i];
-                _quadObjects.RemoveAt(i);
-                _allObjects.Remove(quadObj);
-                InsertAllBranches(quadObj);
+                InsertAllBranches(obj);
             }
+
+            QuadObjects.Clear();
+            _isLeaf = false;
         }
 
         private void InsertAllBranches(TreePoint point)
@@ -146,15 +150,17 @@ namespace QuadTrees
         }
     }
 
-    public struct TreePoint
+    public class TreePoint
     {
         public int id;
         public Vector3 position;
+        public QuadTree leaf;
 
         public TreePoint(int id,Vector3 position)
         {
             this.id = id;
             this.position = position;
+            leaf = null;
         }
     }
 }

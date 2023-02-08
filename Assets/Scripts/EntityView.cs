@@ -37,7 +37,7 @@ public class EntityView : MonoBehaviour
         verticesPointer = 0;
         uvsPointer = 0;
         
-        for (var i = 0; i < 20; i++)
+        for (var i = 0; i < 3; i++)
         {
             _shift += 0.5f;
             Instantiate(new EntityObject(Vector3.zero, Rotate2D(Vector3.right, _shift), 5, 0.1f, Random.Range(0,20)));
