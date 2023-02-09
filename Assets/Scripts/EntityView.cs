@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Leopotam.EcsLite;
 using UnityEngine;
 
 
@@ -18,55 +19,39 @@ public class EntityView : MonoBehaviour
     private int trianglesPointer;
     private int uvsPointer;
     private Mesh viewMesh;
-    private readonly List<EntityObject> entityArray = new List<EntityObject>();
 
     private void Start()
     {
         atlasWight = (int)(atlasSize.x / entityAtlasCellSize.x);
-
+        
         viewMesh = new Mesh();
         viewMesh.RecalculateBounds(UnityEngine.Rendering.MeshUpdateFlags.DontRecalculateBounds);
         GetComponent<MeshFilter>().mesh = viewMesh;
         GenerateEntityTriangles();
     }
 
-    private float _shift  = 0;
-
-    public void FixedUpdate()
+    private readonly Bounds boundOverride = new Bounds(Vector3.zero, Vector3.one * 5000f);
+    public void RenderObjects(EcsFilter filter,EcsWorld world)
     {
         verticesPointer = 0;
         uvsPointer = 0;
-        
-        for (var i = 0; i < 3; i++)
+        var renderPool = world.GetPool<RenderDataComponent>();
+        var transformPool = world.GetPool<TransformComponent>();
+        foreach (var entity in filter)
         {
-            _shift += 0.5f;
-            Instantiate(new EntityObject(Vector3.zero, Rotate2D(Vector3.right, _shift), 5, 0.1f, Random.Range(0,20)));
+            ref RenderDataComponent renderData = ref renderPool.Get(entity);
+            ref TransformComponent transformComponent = ref transformPool.Get(entity);
+            GenerateEntityVertices(transformComponent);
+            GenerateEntityUvs(transformComponent,renderData);
         }
-        
-        for (var i = entityArray.Count-1; i > -1; i--)
-        {
-            var entity = entityArray[i];
-            entity.UpdateMove(Time.deltaTime);
-            var raycast = Physics2D.Raycast(entity.Position, entity.Direction, entity.Speed * Time.deltaTime);
-            if (raycast.collider)
-            {
-                entity.OnCollision(raycast, this);
-            }
-            GenerateEntityVertices(entity);
-            GenerateEntityUvs(entity);
-            if (entity.Speed < 0.1f)
-            {
-                entityArray.Remove(entity);
-            }
-        }
-        
+
         viewMesh.vertices = vertices;
         viewMesh.uv = uvs;
         viewMesh.SetTriangles(triangles, 0, verticesPointer + verticesPointer / 2, 0, false);
-        viewMesh.bounds = new Bounds(Vector3.zero, Vector3.one * 5000f);
+        viewMesh.bounds = boundOverride;
     }
 
-    private void GenerateEntityVertices(EntityObject entityObject)
+    private void GenerateEntityVertices(TransformComponent entityObject)
     {
         vertices[verticesPointer++] = entityObject.Position - (entityObject.Normal + entityObject.Direction) * entityObject.Size;
         vertices[verticesPointer++] = entityObject.Position - (entityObject.Normal - entityObject.Direction) * entityObject.Size;
@@ -82,10 +67,10 @@ public class EntityView : MonoBehaviour
         vertices[verticesPointer++] = pos + Rotate2D(new Vector3(+EntitySize, -EntitySize, 0), angel);
     }
 
-    private void GenerateEntityUvs(EntityObject entityObject)
+    private void GenerateEntityUvs(TransformComponent entityObject,RenderDataComponent renderData)
     {
-        var atlasX = entityObject.AtlasIndex % atlasWight;
-        var atlasY = entityObject.AtlasIndex / atlasWight;
+        var atlasX = renderData.AtlasIndex % atlasWight;
+        var atlasY = renderData.AtlasIndex / atlasWight;
 
         uvs[uvsPointer++] = new Vector2(entityAtlasCellSize.x * (atlasX + 0) / atlasSize.x, entityAtlasCellSize.y * (atlasY + 0) / atlasSize.y);
         uvs[uvsPointer++] = new Vector2(entityAtlasCellSize.x * (atlasX + 0) / atlasSize.x, entityAtlasCellSize.y * (atlasY + 1) / atlasSize.y);
@@ -115,17 +100,5 @@ public class EntityView : MonoBehaviour
             triangles[trianglesPointer++] = index + 2;
             triangles[trianglesPointer++] = index + 3;
         }
-    }
-
-    public bool Instantiate(EntityObject entityObject)
-    {
-        if (entityArray.Count >= MaxEntity) return false;
-        entityArray.Add(entityObject);
-        return true;
-    }
-
-    public void Destroy(EntityObject entityObject)
-    {
-        entityArray.Remove(entityObject);
     }
 }
