@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using EntityComponenSystems.Components;
 using Leopotam.EcsLite;
 using UnityEngine;
 
