@@ -18,6 +18,8 @@ namespace EntityComponenSystems
         
         _systems = new EcsSystems (_world);
         _systems
+            .Add (new CollisionSystem())
+            .Add (new CollisionReflectionSystem())
             .Add (new UpdateNormalSystem())
             .Add (new MoveEntitySystem())
             .Add (new RenderCutoffSystem())
@@ -33,7 +35,7 @@ namespace EntityComponenSystems
         var poolRenderCache = _world.GetPool<RenderDataComponent>();
         var poolRecalcNormal = _world.GetPool<UpdateNormalRequestComponent>();
         var poolSimpleMove = _world.GetPool<SimpleMoveComponent>();
-        for (var i = 0; i < 50000; i++)
+        for (var i = 0; i < 10000; i++)
         {
             var entity = _world.NewEntity();
             
@@ -42,7 +44,7 @@ namespace EntityComponenSystems
             transformComponent.Direction = Random.insideUnitCircle;
             transformComponent.Size = 0.01f;
             ref SimpleMoveComponent simpleMove = ref poolSimpleMove.Add(entity);
-            simpleMove.Speed = 0.03f;
+            simpleMove.Speed = Random.Range(0.5f,2f);
             ref RenderDataComponent renderData = ref poolRenderCache.Add(entity);
             renderData.AtlasIndex = Random.Range(0,100);
             poolRecalcNormal.Add(entity);
