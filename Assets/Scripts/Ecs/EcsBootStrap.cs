@@ -68,7 +68,3 @@ namespace EntityComponenSystems
     }
 }
 }
-
-namespace EntityComponenSystems.Components
-{
-}
