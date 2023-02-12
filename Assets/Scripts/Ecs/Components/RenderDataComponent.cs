@@ -1,4 +1,4 @@
-﻿namespace EntityComponenSystems.Components
+﻿namespace EntityComponentSystems.Components
 {
     struct RenderDataComponent
     {

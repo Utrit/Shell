@@ -1,17 +1,26 @@
-﻿using EntityComponenSystems.Components;
+﻿using EntityComponentSystems.Components;
 using Leopotam.EcsLite;
 using UnityEngine;
 
-namespace EntityComponenSystems.Systems
+namespace EntityComponentSystems.Systems
 {
-    public class UpdateNormalSystem : IEcsRunSystem
+    public class UpdateNormalSystem : IEcsRunSystem, IEcsInitSystem
     {
+        EcsWorld world;
+        EcsFilter filter;
+        EcsPool<TransformComponent> pool;
+        EcsPool<UpdateNormalRequestComponent> requestPool;
+        
+        public void Init(IEcsSystems systems)
+        {
+            world = systems.GetWorld();
+            filter = world.Filter<UpdateNormalRequestComponent>().Inc<TransformComponent>().End();
+            pool = world.GetPool<TransformComponent>();
+            requestPool = world.GetPool<UpdateNormalRequestComponent>();
+        }
+        
         public void Run(IEcsSystems systems)
         {
-            var world = systems.GetWorld();
-            var filter = world.Filter<UpdateNormalRequestComponent>().Inc<TransformComponent>().End();
-            var pool = world.GetPool<TransformComponent>();
-            var requestPool = world.GetPool<UpdateNormalRequestComponent>();
             foreach (var entity in filter)
             {
                 ref TransformComponent transform = ref pool.Get(entity);

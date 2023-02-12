@@ -1,20 +1,29 @@
-﻿using EntityComponenSystems.Components;
+﻿using EntityComponentSystems.Components;
 using Leopotam.EcsLite;
 
-namespace EntityComponenSystems.Systems
+namespace EntityComponentSystems.Systems
 {
-    public class RenderSystem : IEcsRunSystem
+    public class RenderSystem : IEcsRunSystem, IEcsInitSystem
     {
         private EntityView view;
+        private EcsWorld world;
+        private EcsFilter filter;
+        private EcsPool<InViewComponent> poolInView;
+        
         public RenderSystem(EntityView view)
         {
             this.view = view;
         }
+        
+        public void Init(IEcsSystems systems)
+        {
+            world = systems.GetWorld();
+            filter = world.Filter<RenderDataComponent>().Inc<TransformComponent>().Inc<InViewComponent>().End();
+            poolInView = world.GetPool<InViewComponent>();
+        }
+        
         public void Run(IEcsSystems systems)
         {
-            var world = systems.GetWorld();
-            var filter = world.Filter<RenderDataComponent>().Inc<TransformComponent>().Inc<InViewComponent>().End();
-            var poolInView = world.GetPool<InViewComponent>();
             view.RenderObjects(filter,world);
             foreach (var entity in filter)
             {

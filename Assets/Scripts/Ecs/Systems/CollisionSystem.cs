@@ -1,18 +1,28 @@
-﻿using EntityComponenSystems.Components;
+﻿using EntityComponentSystems.Components;
 using Leopotam.EcsLite;
 using UnityEngine;
 
-namespace EntityComponenSystems.Systems
+namespace EntityComponentSystems.Systems
 {
-    public class CollisionSystem : IEcsRunSystem
+    public class CollisionSystem : IEcsRunSystem, IEcsInitSystem
     {
+        private EcsWorld world;
+        private EcsFilter filter;
+        private EcsPool<TransformComponent> pool;
+        private EcsPool<OnCollisionComponent> collisionPool;
+        private EcsPool<SimpleMoveComponent> movePool;
+        
+        public void Init(IEcsSystems systems)
+        {
+            world = systems.GetWorld();
+            filter = world.Filter<TransformComponent>().Inc<SimpleMoveComponent>().End();
+            pool = world.GetPool<TransformComponent>();
+            collisionPool = world.GetPool<OnCollisionComponent>();
+            movePool = world.GetPool<SimpleMoveComponent>();
+        }
+        
         public void Run(IEcsSystems systems)
         {
-            var world = systems.GetWorld();
-            var filter = world.Filter<TransformComponent>().Inc<SimpleMoveComponent>().End();
-            var pool = world.GetPool<TransformComponent>();
-            var collisionPool = world.GetPool<OnCollisionComponent>();
-            var movePool = world.GetPool<SimpleMoveComponent>();
             foreach (var entity in filter)
             {
                 ref TransformComponent transform = ref pool.Get(entity);

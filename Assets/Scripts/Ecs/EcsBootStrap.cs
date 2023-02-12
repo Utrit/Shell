@@ -1,9 +1,9 @@
-using EntityComponenSystems.Components;
-using EntityComponenSystems.Systems;
+using EntityComponentSystems.Components;
+using EntityComponentSystems.Systems;
 using Leopotam.EcsLite;
 using UnityEngine;
 
-namespace EntityComponenSystems
+namespace EntityComponentSystems
 {
     public class EcsBootStrap : MonoBehaviour
 {

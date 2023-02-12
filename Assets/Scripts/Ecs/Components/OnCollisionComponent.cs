@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace EntityComponenSystems.Components
+namespace EntityComponentSystems.Components
 {
     struct OnCollisionComponent
     {

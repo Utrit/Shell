@@ -1,8 +1,8 @@
-﻿using EntityComponenSystems.Components;
+﻿using EntityComponentSystems.Components;
 using Leopotam.EcsLite;
 using UnityEngine;
 
-namespace EntityComponenSystems.Systems
+namespace EntityComponentSystems.Systems
 {
     public class DebugViewSystem : IEcsRunSystem
     {
