@@ -27,9 +27,10 @@ namespace EntityComponentSystems.Systems
             {
                 ref TransformComponent transform = ref pool.Get(entity);
                 ref SimpleMoveComponent move = ref movePool.Get(entity);
-                var raycast = Physics2D.Raycast(transform.Position, transform.Direction, move.Speed * Time.deltaTime);
+                var raycast = Physics2D.Raycast(transform.Position, transform.Direction, move.moveDirection.sqrMagnitude * Time.deltaTime);
                 if (raycast.collider)
                 {
+                    if(collisionPool.Has(entity)) return;
                     ref OnCollisionComponent collision = ref collisionPool.Add(entity);
                     collision.collisionNormal = raycast.normal;
                     collision.collisionPoint = raycast.point;

@@ -26,7 +26,7 @@ namespace EntityComponentSystems.Systems
             {
                 ref TransformComponent transform = ref pool.Get(entity);
                 ref SimpleMoveComponent move = ref movePool.Get(entity);
-                transform.Position += transform.Direction * move.Speed * Time.deltaTime;
+                transform.Position += move.moveDirection * Time.deltaTime;
             }
         }
     }

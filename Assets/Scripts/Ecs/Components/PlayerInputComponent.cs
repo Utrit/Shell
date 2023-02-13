@@ -2,8 +2,9 @@
 
 namespace EntityComponentSystems.Components
 {
-    struct SimpleMoveComponent
+    struct PlayerInputComponent
     {
         public Vector3 moveDirection;
+        public Vector3 mouseDirection;
     }
 }
